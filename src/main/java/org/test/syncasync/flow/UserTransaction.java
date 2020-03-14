@@ -17,14 +17,8 @@ public class UserTransaction extends TransactionCommand<User> {
     }
 
     @Override
-    public void decisionHook(Predicate<User> predicate) {
-        boolean flowType = predicate.test(getRequest());
-        if(flowType){
-            setFlowType(FlowType.SYNC);
-        }
-        else {
-            setFlowType(FlowType.ASYNC);
-        }
+    public Predicate<User> decisionHook() {
+        return p -> p.getAge() > 21 && p.getGender().equalsIgnoreCase("M");
     }
 
     protected User getFallback() {
@@ -35,15 +29,14 @@ public class UserTransaction extends TransactionCommand<User> {
     @Override
     protected User run() throws Exception {
         System.out.println("Running for user: "+ getRequest().getFirstName());
-        Thread.sleep(3000);
+        //Thread.sleep(3000);
         return getRequest();
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        User user = User.builder().firstName("Vipul").lastName("Tiwari").age(30).gender("F").build();
+        User user = User.builder().firstName("Vipul").lastName("Tiwari").age(30).gender("M").build();
         //p -> p.getAge() > 21 && p.getGender().equalsIgnoreCase("M")
         UserTransaction userTransaction = new UserTransaction("User transaction",1000, user);
-        userTransaction.decisionHook(p -> p.getAge() > 21 && p.getGender().equalsIgnoreCase("M"));
         ExecutionResponse<User> executionResponse = userTransaction.submitTransaction(userTransaction);
 
         if(executionResponse.getFutureResponse() != null){

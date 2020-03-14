@@ -18,13 +18,7 @@ abstract public class TransactionCommand<T> extends HystrixCommand<T> {
 
     private T request;
 
-    private FlowType flowType;
-
-    /**
-     * If predicate is true it is SYNC flow, else ASYNC
-     * @param predicate
-     */
-    public abstract void decisionHook(Predicate<T> predicate);
+    public abstract Predicate<T> decisionHook();
 
     private int timeout;
 
@@ -37,14 +31,6 @@ abstract public class TransactionCommand<T> extends HystrixCommand<T> {
 
     protected T getRequest() {
         return request;
-    }
-
-    public void setFlowType(FlowType flowType){
-        this.flowType = flowType;
-    }
-
-    public FlowType getFlowType() {
-        return flowType;
     }
 
     @Data
@@ -61,7 +47,7 @@ abstract public class TransactionCommand<T> extends HystrixCommand<T> {
      */
     protected ExecutionResponse<T> submitTransaction(TransactionCommand<T> transaction) {
         ExecutionResponse<T> executionResponse = new ExecutionResponse<>();
-        if(getFlowType() == FlowType.ASYNC){
+        if(decisionHook().test(getRequest())){
             System.out.println("This is ASYNC flow....");
             Future<T> future = transaction.queue();
             executionResponse.setFutureResponse(future);
